@@ -1,12 +1,9 @@
 #ifndef SHIELDING_HASH_H
 #define SHIELDING_HASH_H
 
+#include <utility>
 #include <stdbool.h>
 #include "uthash.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define MAX_LOCKS 4
 #define MAX_HASH_ENTRIES 10
@@ -18,34 +15,28 @@ extern "C" {
     #define DEBUG_PRINT(...) ((void)0)
 #endif
 
-typedef enum {
-    LS_ACQUIRE_NOW,
+// Lock status enum
+enum class LS_Status{
+    LS_ACQUIRE_NOW = 1,
     LS_SKIP_ACQUISITION,
+    LS_UNBALANCED_LOCK,
     LS_RELEASE_NOW,
     LS_SKIP_RELEASE,
-    LS_UNBALANCED_LOCK,
-    LS_UNBALANCED_UNLOCK
-} LS_Status;
+    LS_UNBALANCED_UNLOCK,
+} ;
 
-typedef struct {
+struct LS_LockEntry {
     void* lock_ptr;
     int rec_count;
-} LS_LockEntry;
+} ;
 
-typedef struct LS_LockHashEntry {
+struct LS_LockHashEntry {
     void* lock_ptr;
     int rec_count;
     UT_hash_handle hh;
     struct LS_LockHashEntry* next;
     bool dynamically_allocated;
-} LS_LockHashEntry;
-
-extern __thread LS_LockEntry lock_table[MAX_LOCKS];
-extern __thread int lock_count;
-extern __thread LS_LockHashEntry* lock_hash;
-extern __thread LS_LockHashEntry freelist_pool[MAX_HASH_ENTRIES];
-extern __thread LS_LockHashEntry* freelist_head;
-extern __thread bool freelist_initialized;
+};
 
 void init_freelist();
 LS_LockHashEntry* freelist_pop();
@@ -54,16 +45,9 @@ LS_LockEntry* lookup(void* l);
 void IncrementRef(void* l);
 int DecrementRef(void* l);
 
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-// C++-only: template-based wrappers
-#ifdef __cplusplus
-#include <utility>
 
 template <typename LockFunc, typename... Args>
-inline LS_Status LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&... args) {
+LS_Status  LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&... args) {
     DEBUG_PRINT("In LS_ACQUIRE\n");
     LS_LockEntry* entry = lookup(l);
     if (!entry) {
@@ -79,7 +63,7 @@ inline LS_Status LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&...
 }
 
 template <typename UnlockFunc, typename... Args>
-inline LS_Status LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&&... args) {
+LS_Status LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&&... args) {
     DEBUG_PRINT("In LS_RELEASE\n");
     LS_LockEntry* entry = lookup(l);
     if (!entry) {
@@ -97,6 +81,5 @@ inline LS_Status LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&
     DecrementRef(l);
     return LS_Status::LS_RELEASE_NOW;
 }
-#endif // __cplusplus
 
 #endif // SHIELDING_HASH_H

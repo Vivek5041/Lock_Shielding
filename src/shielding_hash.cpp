@@ -4,12 +4,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-__thread LS_LockEntry lock_table[MAX_LOCKS];
-__thread int lock_count = 0;
-__thread LS_LockHashEntry* lock_hash = NULL;
-__thread LS_LockHashEntry freelist_pool[MAX_HASH_ENTRIES];
-__thread LS_LockHashEntry* freelist_head = NULL;
-__thread bool freelist_initialized = false;
+thread_local LS_LockEntry lock_table[MAX_LOCKS];
+thread_local int lock_count = 0;
+thread_local LS_LockHashEntry* lock_hash = NULL;
+thread_local LS_LockHashEntry freelist_pool[MAX_HASH_ENTRIES];
+thread_local LS_LockHashEntry* freelist_head = NULL;
+thread_local bool freelist_initialized = false;
 
 void init_freelist() {
     if (freelist_initialized) return;
@@ -56,6 +56,9 @@ void freelist_push(LS_LockHashEntry* entry) {
     entry->next = freelist_head;
     freelist_head = entry;
 }
+
+
+
 
 LS_LockEntry* lookup(void* l) {
     DEBUG_PRINT("In lookup\n");
@@ -111,7 +114,7 @@ int DecrementRef(void* l) {
         if (entry->rec_count > 1) {
             entry->rec_count--;
         } else {
-            int idx = entry - lock_table;
+            int idx = static_cast<int> (entry - lock_table);
             lock_table[idx] = lock_table[--lock_count];
         }
         return entry->rec_count;

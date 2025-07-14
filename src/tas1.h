@@ -2,7 +2,7 @@
 #define TAS1_H
 #include <atomic>
 
-int num_threads;
+// int num_threads;
 
 class TASLock {
 private:

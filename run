@@ -16,22 +16,22 @@ make LOCK_DEF=ABQL1
 make LOCK_DEF=ABQL3
 make LOCK_DEF=ABQL4
 export LD_LIBRARY_PATH=$PWD/lib
-for i in {1..2}
+for i in {1..5}
 	do
-#	./bin/mcs1_lock_bench 24 >>mcs1_cpp.csv
-#	./bin/mcs3_lock_bench 24 >>mcs3_cpp.csv
-#	./bin/mcs4_lock_bench 24 >>mcs4_cpp.csv
-#	./bin/tas1_lock_bench 24 >>tas1_cpp.csv
-#	./bin/tas3_lock_bench 24 >>tas3_cpp.csv
-#	./bin/tas4_lock_bench 24 >>tas4_cpp.csv
-#	./bin/ticket1_lock_bench 24 >>ticket1_cpp.csv
-#	./bin/ticket3_lock_bench 24 >>ticket3_cpp.csv
-#	./bin/ticket4_lock_bench 24 >>ticket4_cpp.csv
-        ./bin/clh1_lock_bench 24 >>clh1_cpp.csv
-        ./bin/clh3_lock_bench 24 >>clh3_cpp.csv
-        ./bin/clh4_lock_bench 24 >>clh4_cpp.csv
-        ./bin/abql1_lock_bench 24 >>abql1_cpp.csv
-        ./bin/abql3_lock_bench 24 >>abql3_cpp.csv
-        ./bin/abql4_lock_bench 24 >>abql4_cpp.csv
+#	./bin/mcs1_lock_bench 24 >>results/mcs1_cpp.csv
+#	./bin/mcs3_lock_bench 24 >>results/mcs3_cpp.csv
+#	./bin/mcs4_lock_bench 24 >>results/mcs4_cpp.csv
+#	./bin/tas1_lock_bench 24 >>results/tas1_cpp.csv
+#	./bin/tas3_lock_bench 24 >>results/tas3_cpp.csv
+#	./bin/tas4_lock_bench 24 >>results/tas4_cpp.csv
+#	./bin/ticket1_lock_bench 24 >>results/ticket1_cpp.csv
+#	./bin/ticket3_lock_bench 24 >>results/ticket3_cpp.csv
+#	./bin/ticket4_lock_bench 24 >>results/ticket4_cpp.csv
+        ./bin/clh1_lock_bench 24 >>results/clh1_cpp.csv
+        ./bin/clh3_lock_bench 24 >>results/clh3_cpp.csv
+        ./bin/clh4_lock_bench 24 >>results/clh4_cpp.csv
+        ./bin/abql1_lock_bench 24 >>results/abql1_cpp.csv
+        ./bin/abql3_lock_bench 24 >>results/abql3_cpp.csv
+        ./bin/abql4_lock_bench 24 >>results/abql4_cpp.csv
 	done
 date

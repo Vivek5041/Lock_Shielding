@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX := g++
-CXXFLAGS := -O3 -std=c++17 -fPIC -Wall -Iinc
+CXXFLAGS := -O2 -std=c++17 -fPIC -Wall -Iinc -fno-inline
 LDFLAGS := -lpthread
 
 SRC_DIR := src
@@ -19,7 +19,7 @@ HASH_SO := $(LIB_DIR)/libshielding_hash.so
 ARRAY_SO := $(LIB_DIR)/libshielding_array.so
 
 # Default lock type (override with make LOCK_DEF=TAS3)
-LOCK_DEF ?= MCS3
+LOCK_DEF ?= MCS1
 LOCK_LOWER := $(shell echo $(LOCK_DEF) | tr A-Z a-z)
 BENCH_BIN := $(BIN_DIR)/$(LOCK_LOWER)_lock_bench
 

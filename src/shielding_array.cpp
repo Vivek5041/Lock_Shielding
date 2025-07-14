@@ -2,6 +2,10 @@
 
 thread_local LS_LockEntry lock_table[MAX_LOCKS];
 thread_local int lock_count = 0;
+thread_local LS_LockHashEntry* lock_hash = NULL;
+thread_local LS_LockHashEntry freelist_pool[MAX_HASH_ENTRIES];
+thread_local LS_LockHashEntry* freelist_head = NULL;
+thread_local bool freelist_initialized = false;
 
 LS_LockEntry* lookup(void* l) {
     if (lock_count <= MAX_LOCKS) {

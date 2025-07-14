@@ -4,7 +4,9 @@
 #include <cstdio>
 #include <utility>
 
-#define MAX_LOCKS 8
+
+#define MAX_LOCKS 4
+#define MAX_HASH_ENTRIES 10
 
 #define DEBUG_P 0
 #if DEBUG_P
@@ -29,15 +31,21 @@ struct LS_LockEntry {
     long rec_count;
 };
 
-extern thread_local LS_LockEntry lock_table[MAX_LOCKS];
-extern thread_local int lock_count;
+struct LS_LockHashEntry {
+    void* lock_ptr;
+    int rec_count;
+    // UT_hash_handle hh;
+    int * dummy[8];
+    struct LS_LockHashEntry* next;
+    bool dynamically_allocated;
+};
 
 LS_LockEntry* lookup(void* l);
 void IncrementRef(void* l);
 int DecrementRef(void* l);
 
 template <typename LockFunc, typename... Args>
-inline LS_Status LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&... args) {
+LS_Status LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&... args) { //__attribute__((always_inline))
     DEBUG_PRINT("In LS_ACQUIRE\n");
     LS_LockEntry* entry = lookup(l);
     if (!entry) {
@@ -53,7 +61,7 @@ inline LS_Status LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&...
 }
 
 template <typename UnlockFunc, typename... Args>
-inline LS_Status LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&&... args) {
+LS_Status  LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&&... args) {
     DEBUG_PRINT("In LS_RELEASE\n");
     LS_LockEntry* entry = lookup(l);
     if (!entry) {

@@ -7,11 +7,13 @@
 
 #define CPU_RANGE1_START 64
 #define CPU_RANGE1_END 127
-
-#define NUM_ITERATION 1000000
-#define WARMUP_ITERATIONS 1000
+#define NUM_ITERATION 100000000
+#define WARMUP_ITERATIONS 10000
 
 LockType lock;
+pthread_barrier_t my_barrier;
+int num_threads; 
+long int iterations_per_thread;
 
 void do_work(int amount) {
     volatile int dummy = 0;
@@ -34,7 +36,6 @@ void pin_thread_to_cpu(int thread_id) {
 }
 
 void warmup_thread(int id) {
-    //pin_thread_to_cpu(id);
     for (long int i = 0; i < WARMUP_ITERATIONS; i++) {
         lock.Acquire();
         lock.Release();
@@ -42,11 +43,29 @@ void warmup_thread(int id) {
 }
 
 void test_thread(int id) {
-    pin_thread_to_cpu(id);
-    for (long int i = 0; i < NUM_ITERATION; i++) {
+    pin_thread_to_cpu(id);    
+    warmup_thread(id);
+    pthread_barrier_wait(&my_barrier);
+
+    // Each thread performs its assigned portion of iterations
+    long int start_iter = id * iterations_per_thread;
+    long int end_iter = (id == num_threads - 1) ? NUM_ITERATION : (id + 1) * iterations_per_thread;
+
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    for (long int i = start_iter; i < end_iter; i++) {
         lock.Acquire();
         do_work(10000);
         lock.Release();
+    }
+    
+    pthread_barrier_wait(&my_barrier);
+    auto end = std::chrono::high_resolution_clock::now();
+    
+    if (id == 0) {
+        std::chrono::duration<double> total_time = end - start;
+        double throughput = static_cast<double>(NUM_ITERATION) / total_time.count();
+        std::cout << num_threads << "," << NUM_ITERATION << "," << total_time.count() << "," << throughput << "\n";        
     }
 }
 
@@ -55,27 +74,18 @@ int main(int argc, char* argv[]) {
         std::cerr << "usage: ./<exe> <num_threads>\n";
         return 1;
     }
-
-    int num_threads = std::stoi(argv[1]);
-
-    std::vector<std::thread> warmup_threads;
-    for (int i = 0; i < num_threads; i++) {
-        warmup_threads.emplace_back(warmup_thread, i);
-    }
-    for (auto& t : warmup_threads) t.join();
-
+    
+    num_threads = std::stoi(argv[1]);
+    iterations_per_thread = NUM_ITERATION / num_threads;
+    
+    pthread_barrier_init(&my_barrier, NULL, num_threads);
     std::vector<std::thread> threads;
-
-    auto start = std::chrono::high_resolution_clock::now();
+    
     for (int i = 0; i < num_threads; i++) {
         threads.emplace_back(test_thread, i);
     }
+    
     for (auto& t : threads) t.join();
-    auto end = std::chrono::high_resolution_clock::now();
-
-    std::chrono::duration<double> total_time = end - start;
-    double throughput = (static_cast<double>(NUM_ITERATION) * num_threads) / total_time.count();
-
-    std::cout << num_threads << "," << NUM_ITERATION << "," << total_time.count() << "," << throughput << "\n";
+    pthread_barrier_destroy(&my_barrier);    
     return 0;
 }
