@@ -60,8 +60,42 @@
 #elif defined(TAS4)
     #include "tas4.h"
     typedef TASLock LockType;
-    
-        
+
+#elif defined(K421)
+    #include "k421.h"
+    typedef K42Lock LockType;    
+
+#elif defined(K423)
+    #include "k423.h"
+    typedef K42Lock LockType;    
+
+#elif defined(K424)
+    #include "k424.h"
+    typedef K42Lock LockType;    
+
+#elif defined(HEM1)
+    #include "hem1.h"
+    typedef HemLock LockType;    
+
+#elif defined(HEM3)
+    #include "hem3.h"
+    typedef HemLock LockType;    
+
+#elif defined(HEM4)
+    #include "hem4.h"
+    typedef HemLock LockType;         
+   
+#elif defined(CNA1)
+    #include "cna1.h"
+    typedef CNALock LockType;    
+
+#elif defined(CNA3)
+    #include "cna3.h"
+    typedef CNALock LockType; 
+
+#elif defined(CNA4)
+    #include "cna4.h"
+    typedef CNALock LockType;             
 // ---------- Default fallback ----------
 #else
     #pragma message("No lock type defined. Defaulting to TASLock.")

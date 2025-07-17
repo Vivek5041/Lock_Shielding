@@ -14,12 +14,12 @@ class CLHLock {
     std::atomic<QNode*> tail{new QNode()};
 public:
     void Acquire() {
-        myNode->locked.store(true);
-        myPred = tail.exchange(myNode);
-        while (myPred->locked.load());
+        myNode->locked.store(true, std::memory_order_relaxed);
+        myPred = tail.exchange(myNode, std::memory_order_acq_rel);
+        while (myPred->locked.load(std::memory_order_acquire));
     }
     void Release() {
-        myNode->locked.store(false);
+        myNode->locked.store(false, std::memory_order_release);
         std::swap(myNode, myPred);
     }
 };

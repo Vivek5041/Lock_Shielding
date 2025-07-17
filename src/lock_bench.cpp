@@ -43,7 +43,7 @@ void warmup_thread(int id) {
 }
 
 void test_thread(int id) {
-    pin_thread_to_cpu(id);    
+    // pin_thread_to_cpu(id);    
     warmup_thread(id);
     pthread_barrier_wait(&my_barrier);
 
@@ -55,7 +55,7 @@ void test_thread(int id) {
     
     for (long int i = start_iter; i < end_iter; i++) {
         lock.Acquire();
-        do_work(10000);
+        do_work(1000);
         lock.Release();
     }
     
