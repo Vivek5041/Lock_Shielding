@@ -11,6 +11,9 @@
 
 - **`libshielding_hash.so`**:  
   Handles unbalanced lock/unlock protection with hybrid approach.
+  
+- **`C version`**:  
+  C library files are provided in **[`Clib`](Clib/)** directory.
 
 ---
 
