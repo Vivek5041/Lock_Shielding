@@ -15,6 +15,14 @@
     #define DEBUG_PRINT(...) ((void)0)
 #endif
 
+#undef HASH_FUNCTION
+#define HASH_FUNCTION(keyptr, keylen, hashv) \
+    do { \
+        uintptr_t k = (uintptr_t)(*(keyptr)); \
+        hashv = (unsigned int)(k >> 4) ^ (unsigned int)(k); \
+    } while (0)
+
+
 // Lock status enum
 enum class LS_Status{
     LS_ACQUIRE_NOW = 1,
