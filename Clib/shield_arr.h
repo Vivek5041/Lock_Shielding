@@ -78,8 +78,6 @@ inline int DecrementRef(void* l) {
             return 0;
         }
     }
-    return 0;
-
 }
 
 // Typedef for locking/unlocking function pointer
