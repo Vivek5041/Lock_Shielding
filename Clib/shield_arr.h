@@ -67,16 +67,19 @@ inline int DecrementRef(void* l) {
     LS_LockEntry* entry = lookup(l);
     if (!entry) return -1;
 
-    if (lock_count < MAX_LOCKS) {  // We are in array mode
-        if (entry->rec_count > 1) {
+    if (lock_count < MAX_LOCKS) {
+        int val = entry->rec_count;
+        if (val > 1) {
             entry->rec_count--;
+            return val - 1;
         } else {
-            int idx = entry - lock_table;  //Safe only in array mode
+            int idx = entry - lock_table;
             lock_table[idx] = lock_table[--lock_count];
+            return 0;
         }
-        return entry->rec_count;
-    } 
+    }
     return 0;
+
 }
 
 // Typedef for locking/unlocking function pointer

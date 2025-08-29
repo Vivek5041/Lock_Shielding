@@ -157,27 +157,28 @@ inline int DecrementRef(void* l) {
     if (!entry) return -1;
 
     if (lock_count <= MAX_LOCKS) {  // We are in array mode
-        if (entry->rec_count > 1) {
+        int val = entry->rec_count;
+        if (val > 1) {
             entry->rec_count--;
+            return val - 1;
         } else {
-            int idx = entry - lock_table;  //Safe only in array mode
+            int idx = entry - lock_table;
             lock_table[idx] = lock_table[--lock_count];
+            return 0;
         }
-        return entry->rec_count;
-    } else {
+    } else {  // hash mode
         LS_LockHashEntry* hash_entry = (LS_LockHashEntry*) entry;
-        if (hash_entry->rec_count > 1) {
+        int val = hash_entry->rec_count;
+        if (val > 1) {
             hash_entry->rec_count--;
-	    return hash_entry->rec_count;
+            return val - 1;
         } else {
-            int ret = hash_entry->rec_count - 1;
-            HASH_DEL(lock_hash, hash_entry);  //Add key as lock_ptr
-            //free(hash_entry);
-            //int ret = hash_entry->rec_count;
-	    freelist_push(hash_entry);
-	    return ret;
+            HASH_DEL(lock_hash, hash_entry);
+            freelist_push(hash_entry);
+            return 0;
         }
     }
+
 }
 
 // Typedef for locking/unlocking function pointer
