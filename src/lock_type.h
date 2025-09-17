@@ -12,6 +12,10 @@
 #elif defined(MCS4)
     #include "mcs4.h"
     typedef MCSLock LockType;    
+    
+#elif defined(MCS5)
+    #include "mcs5.h"
+    typedef MCSLock LockType; 
 
 #elif defined(CLH1)
     #include "clh1.h"

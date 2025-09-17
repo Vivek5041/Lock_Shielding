@@ -3,7 +3,7 @@
 
 #include <cstdio>
 #include <utility>
-
+#include <cstdlib>
 
 #define MAX_LOCKS 4
 #define MAX_HASH_ENTRIES 10
@@ -45,7 +45,7 @@ void IncrementRef(void* l);
 int DecrementRef(void* l);
 
 template <typename LockFunc, typename... Args>
-LS_Status LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&... args) { //__attribute__((always_inline))
+LS_Status  LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&... args) {
     DEBUG_PRINT("In LS_ACQUIRE\n");
     LS_LockEntry* entry = lookup(l);
     if (!entry) {
@@ -57,14 +57,18 @@ LS_Status LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&... args) 
         IncrementRef(l);
         return LS_Status::LS_SKIP_ACQUISITION;
     }
+    fprintf(stderr, "PANIC: LS_ACQUIRE failed due to UNBALANCED_LOCK!\n");
+    abort(); /* or exit(EXIT_FAILURE); */
     return LS_Status::LS_UNBALANCED_LOCK;
 }
 
 template <typename UnlockFunc, typename... Args>
-LS_Status  LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&&... args) {
+LS_Status LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&&... args) {
     DEBUG_PRINT("In LS_RELEASE\n");
     LS_LockEntry* entry = lookup(l);
     if (!entry) {
+        fprintf(stderr, "PANIC: LS_RELEASE failed due to UNBALANCED_UNLOCK!\n");
+        abort(); /* or exit(EXIT_FAILURE); */   
         return LS_Status::LS_UNBALANCED_UNLOCK;
     }
     if (reentrant) {
@@ -79,6 +83,7 @@ LS_Status  LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&&... a
     DecrementRef(l);
     return LS_Status::LS_RELEASE_NOW;
 }
+
 
 #endif // SHIELDING_ARRAY_H
 

@@ -3,6 +3,8 @@
 
 #include <utility>
 #include <stdbool.h>
+#include <cstdio>
+#include <cstdlib>
 #include "uthash.h"
 
 #define MAX_LOCKS 4
@@ -67,6 +69,8 @@ LS_Status  LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&... args)
         IncrementRef(l);
         return LS_Status::LS_SKIP_ACQUISITION;
     }
+    fprintf(stderr, "PANIC: LS_ACQUIRE failed due to UNBALANCED_LOCK!\n");
+    abort(); /* or exit(EXIT_FAILURE); */
     return LS_Status::LS_UNBALANCED_LOCK;
 }
 
@@ -75,6 +79,8 @@ LS_Status LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&&... ar
     DEBUG_PRINT("In LS_RELEASE\n");
     LS_LockEntry* entry = lookup(l);
     if (!entry) {
+        fprintf(stderr, "PANIC: LS_RELEASE failed due to UNBALANCED_UNLOCK!\n");
+        abort(); /* or exit(EXIT_FAILURE); */   
         return LS_Status::LS_UNBALANCED_UNLOCK;
     }
     if (reentrant) {
