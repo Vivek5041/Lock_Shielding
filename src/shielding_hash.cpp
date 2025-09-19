@@ -57,9 +57,6 @@ void freelist_push(LS_LockHashEntry* entry) {
     freelist_head = entry;
 }
 
-
-
-
 LS_LockEntry* lookup(void* l) {
     DEBUG_PRINT("In lookup\n");
     if (lock_count <= MAX_LOCKS) {
@@ -75,9 +72,9 @@ LS_LockEntry* lookup(void* l) {
     }
 }
 
-void IncrementRef(void* l) {
+void IncrementRef(void* l, LS_LockEntry* entry) {
     DEBUG_PRINT("In IncrementRef\n");
-    LS_LockEntry* entry = lookup(l);
+    // LS_LockEntry* entry = lookup(l);
     if (!entry) {
         if (lock_count < MAX_LOCKS) {
             lock_table[lock_count].lock_ptr = l;
@@ -105,29 +102,32 @@ void IncrementRef(void* l) {
     }
 }
 
-int DecrementRef(void* l) {
+int DecrementRef(void* l, LS_LockEntry* entry) {
     DEBUG_PRINT("In DecrementRef\n");
-    LS_LockEntry* entry = lookup(l);
+    // LS_LockEntry* entry = lookup(l);
     if (!entry) return -1;
 
     if (lock_count <= MAX_LOCKS) {
-        if (entry->rec_count > 1) {
+        int val = entry->rec_count;
+        if (val > 1) {
             entry->rec_count--;
+            return val - 1;
         } else {
             int idx = static_cast<int> (entry - lock_table);
             lock_table[idx] = lock_table[--lock_count];
+            return 0;
         }
-        return entry->rec_count;
+        
     } else {
         LS_LockHashEntry* hash_entry = (LS_LockHashEntry*) entry;
-        if (hash_entry->rec_count > 1) {
+        int val = hash_entry->rec_count;
+        if (val > 1) {
             hash_entry->rec_count--;
-            return hash_entry->rec_count;
+            return val - 1;
         } else {
-            int ret = hash_entry->rec_count - 1;
             HASH_DEL(lock_hash, hash_entry);
             freelist_push(hash_entry);
-            return ret;
+            return 0;
         }
     }
 }

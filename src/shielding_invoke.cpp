@@ -4,11 +4,58 @@
 thread_local LS_LockEntry lock_table[MAX_LOCKS];
 thread_local int lock_count = 0;
 
-// Note: The hash and freelist variables are defined but not used by the functions below.
+
 thread_local LS_LockHashEntry* lock_hash = NULL;
 thread_local LS_LockHashEntry freelist_pool[MAX_HASH_ENTRIES];
 thread_local LS_LockHashEntry* freelist_head = NULL;
 thread_local bool freelist_initialized = false;
+
+void init_freelist() {
+    if (freelist_initialized) return;
+    memset(freelist_pool, 0, sizeof(freelist_pool));
+
+    for (int i = 0; i < MAX_HASH_ENTRIES - 1; i++) {
+        freelist_pool[i].next = &freelist_pool[i + 1];
+        freelist_pool[i].dynamically_allocated = false;
+    }
+    freelist_pool[MAX_HASH_ENTRIES - 1].next = NULL;
+    freelist_pool[MAX_HASH_ENTRIES - 1].dynamically_allocated = false;
+    freelist_head = &freelist_pool[0];
+    freelist_initialized = true;
+}
+
+LS_LockHashEntry* freelist_pop() {
+    if (!freelist_initialized) {
+        init_freelist();
+    }
+    LS_LockHashEntry* entry;
+    if (freelist_head) {
+        entry = freelist_head;
+        freelist_head = freelist_head->next;
+        entry->dynamically_allocated = false;
+        return entry;
+    }
+    entry = (LS_LockHashEntry*)malloc(sizeof(LS_LockHashEntry));
+    if (entry) {
+        memset(entry, 0, sizeof(LS_LockHashEntry));
+        entry->dynamically_allocated = true;
+        entry->next = NULL;
+    }
+    return entry;
+}
+
+void freelist_push(LS_LockHashEntry* entry) {
+    if (!entry) return;
+    if (entry->dynamically_allocated) {
+        free(entry);
+        return;
+    }
+    entry->lock_ptr = NULL;
+    entry->rec_count = 0;
+    entry->next = freelist_head;
+    freelist_head = entry;
+}
+
 
 LS_LockEntry* lookup(void* l) {
     // This implementation only uses the array mode.
@@ -39,14 +86,27 @@ int DecrementRef(void* l, LS_LockEntry* entry) {
     // LS_LockEntry* entry = lookup(l);
     if (!entry) return -1; // Lock not found
 
-    if (entry->rec_count > 1) {
-        entry->rec_count--;
+    if (lock_count <= MAX_LOCKS) {
+        int val = entry->rec_count;
+        if (val > 1) {
+            entry->rec_count--;
+            return val - 1;
+        } else {
+            int idx = static_cast<int> (entry - lock_table);
+            lock_table[idx] = lock_table[--lock_count];
+            return 0;
+        }
+        
     } else {
-        // Last reference, remove the entry from the table.
-        // This is done by swapping with the last element for O(1) removal.
-        int idx = static_cast<int>(entry - lock_table);
-        lock_table[idx] = lock_table[--lock_count];
-        return 0; // Return 0 to indicate the lock was fully released
+        LS_LockHashEntry* hash_entry = (LS_LockHashEntry*) entry;
+        int val = hash_entry->rec_count;
+        if (val > 1) {
+            hash_entry->rec_count--;
+            return val - 1;
+        } else {
+            HASH_DEL(lock_hash, hash_entry);
+            freelist_push(hash_entry);
+            return 0;
+        }
     }
-    return entry->rec_count;
 };

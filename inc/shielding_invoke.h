@@ -1,9 +1,12 @@
 #ifndef SHIELDING_INVOKE_H
 #define SHIELDING_INVOKE_H
 
-#include <cstdio>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
 #include <utility>
 #include <functional> // Required for std::invoke
+#include "uthash.h"
 
 #define MAX_LOCKS 4
 #define MAX_HASH_ENTRIES 10
@@ -35,15 +38,18 @@ struct LS_LockEntry {
 struct LS_LockHashEntry {
     void* lock_ptr;
     int rec_count;
-    int * dummy[8];
+    UT_hash_handle hh;
     struct LS_LockHashEntry* next;
     bool dynamically_allocated;
 };
 
 // Function declarations
- LS_LockEntry* lookup(void* l);
- void IncrementRef(void* l, LS_LockEntry* entry);
- int DecrementRef(void* l,LS_LockEntry* entry);
+void init_freelist();
+LS_LockHashEntry* freelist_pop();
+void freelist_push(LS_LockHashEntry* entry);
+LS_LockEntry* lookup(void* l);
+void IncrementRef(void* l, LS_LockEntry* entry);
+int DecrementRef(void* l, LS_LockEntry* entry);
 
 
 template <typename Obj,
