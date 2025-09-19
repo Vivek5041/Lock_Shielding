@@ -58,24 +58,44 @@ void freelist_push(LS_LockHashEntry* entry) {
 
 
 LS_LockEntry* lookup(void* l) {
-    // This implementation only uses the array mode.
+    DEBUG_PRINT("In lookup\n");
     if (lock_count <= MAX_LOCKS) {
-        for (int i = 0; i < lock_count; ++i) {
+        for (int i = 0; i < lock_count; i++) {
             if (lock_table[i].lock_ptr == l)
                 return &lock_table[i];
         }
+        return NULL;
+    } else {
+        LS_LockHashEntry* entry;
+        HASH_FIND_PTR(lock_hash, &l, entry);
+        return (LS_LockEntry*)entry;
     }
-    return nullptr;
 }
 
 void IncrementRef(void* l, LS_LockEntry* entry) {
+    DEBUG_PRINT("In IncrementRef\n");
     // LS_LockEntry* entry = lookup(l);
     if (!entry) {
-        // Add a new entry if there's space
         if (lock_count < MAX_LOCKS) {
             lock_table[lock_count].lock_ptr = l;
             lock_table[lock_count].rec_count = 1;
-            ++lock_count;
+            lock_count++;
+            if (lock_count == MAX_LOCKS) {
+                init_freelist();
+                for (int i = 0; i < MAX_LOCKS; i++) {
+                    LS_LockHashEntry* new_entry = freelist_pop();
+                    new_entry->lock_ptr = lock_table[i].lock_ptr;
+                    new_entry->rec_count = lock_table[i].rec_count;
+                    HASH_ADD_PTR(lock_hash, lock_ptr, new_entry);
+                }
+                lock_count++;
+            }
+        } else {
+            LS_LockHashEntry* new_entry = freelist_pop();
+            if (!new_entry) return;
+            new_entry->lock_ptr = l;
+            new_entry->rec_count = 1;
+            HASH_ADD_PTR(lock_hash, lock_ptr, new_entry);
         }
     } else {
         entry->rec_count++;
