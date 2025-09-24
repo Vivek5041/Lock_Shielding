@@ -47,9 +47,9 @@ inline LS_LockEntry* lookup(void* l) {
 }
 
 // --- TLS Increment ---
-inline void IncrementRef(void* l) {
+inline void IncrementRef(void* l, LS_LockEntry* entry) {
     DEBUG_PRINT("In IncrementRef\n");
-    LS_LockEntry* entry = lookup(l);
+    // LS_LockEntry* entry = lookup(l);
     if (!entry) {
         if (lock_count <= MAX_LOCKS ) {
             lock_table[lock_count].lock_ptr = l;
@@ -62,9 +62,9 @@ inline void IncrementRef(void* l) {
 }
 
 // --- TLS Decrement ---
-inline int DecrementRef(void* l) {
+inline int DecrementRef(void* l, LS_LockEntry* entry) {
     DEBUG_PRINT("In DecrementRef\n");
-    LS_LockEntry* entry = lookup(l);
+    // LS_LockEntry* entry = lookup(l);
     if (!entry) return -1;
 
     if (lock_count < MAX_LOCKS) {

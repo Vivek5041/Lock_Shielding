@@ -117,9 +117,9 @@ inline LS_LockEntry* lookup(void* l) {
 }
 
 // --- TLS Increment ---
-inline void IncrementRef(void* l) {
+inline void IncrementRef(void* l, LS_LockEntry* entry) {
     DEBUG_PRINT("In IncrementRef\n");
-    LS_LockEntry* entry = lookup(l);
+    // LS_LockEntry* entry = lookup(l);
     if (!entry) {
         if (lock_count < MAX_LOCKS ) {
             lock_table[lock_count].lock_ptr = l;
@@ -151,9 +151,9 @@ inline void IncrementRef(void* l) {
 }
 
 // --- TLS Decrement ---
-inline int DecrementRef(void* l) {
+inline int DecrementRef(void* l, LS_LockEntry* entry) {
     DEBUG_PRINT("In DecrementRef\n");
-    LS_LockEntry* entry = lookup(l);
+    // LS_LockEntry* entry = lookup(l);
     if (!entry) return -1;
 
     if (lock_count <= MAX_LOCKS) {  // We are in array mode
@@ -195,11 +195,11 @@ LS_Status LS_ACQUIRE1(void* l , bool reentrant, LockFunc1 __lock_fn) {
     LS_LockEntry* entry = lookup(l);
     if (!entry) {
         __lock_fn(l);
-        IncrementRef(l);
+        IncrementRef(l, entry);
         return LS_ACQUIRE_NOW;
     }
     if (reentrant){
-        IncrementRef(l);
+        IncrementRef(l, entry);
         return LS_SKIP_ACQUISITION;
     }
     return LS_UNBALANCED_LOCK;
@@ -211,11 +211,11 @@ LS_Status LS_ACQUIRE2(void* l, void* me, bool reentrant, LockFunc2 __lock_fn) {
     LS_LockEntry* entry = lookup(l);
     if (!entry) {
         __lock_fn(l, me);
-        IncrementRef(l);
+        IncrementRef(l, entry);
         return LS_ACQUIRE_NOW;
     }
     if (reentrant){
-        IncrementRef(l);
+        IncrementRef(l, entry);
         return LS_SKIP_ACQUISITION;
     }
     return LS_UNBALANCED_LOCK;
@@ -230,7 +230,7 @@ LS_Status LS_RELEASE1(void* l,  bool reentrant, UnlockFunc1  __unlock_fn) {
         return LS_UNBALANCED_UNLOCK;
     }
     if (reentrant) {
-        int val = DecrementRef(l);
+        int val = DecrementRef(l, entry);
         if(val == 0) {
             __unlock_fn(l);
             return LS_RELEASE_NOW;
@@ -238,7 +238,7 @@ LS_Status LS_RELEASE1(void* l,  bool reentrant, UnlockFunc1  __unlock_fn) {
         return LS_SKIP_RELEASE;
     }
     __unlock_fn(l);
-    DecrementRef(l);
+    DecrementRef(l, entry);
     return LS_RELEASE_NOW; 
 }
 
@@ -251,7 +251,7 @@ LS_Status LS_RELEASE2(void* l, void* me, bool reentrant, UnlockFunc2  __unlock_f
         return LS_UNBALANCED_UNLOCK;
     }
     if (reentrant) {
-        int val = DecrementRef(l);
+        int val = DecrementRef(l, entry);
         if(val == 0) {
             __unlock_fn(l,me);
             return LS_RELEASE_NOW;
@@ -259,7 +259,7 @@ LS_Status LS_RELEASE2(void* l, void* me, bool reentrant, UnlockFunc2  __unlock_f
         return LS_SKIP_RELEASE;
     }
     __unlock_fn(l, me);
-    DecrementRef(l);
+    DecrementRef(l, entry);
     return LS_RELEASE_NOW;
 }
 
