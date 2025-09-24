@@ -1,105 +1,46 @@
 #ifndef LOCK_TYPE_H
 #define LOCK_TYPE_H
 
-#if defined(MCS1)
+// MCS Lock variants
+#if defined(MCS_BASELINE) || defined(MCS_LS_ARRAY) || defined(MCS_LS_HYBRID) || defined(MCS_LS_INVOKE)
     #include "mcs1.h"
     typedef MCSLock LockType;
 
-#elif defined(MCS3)
-    #include "mcs3.h"
-    typedef MCSLock LockType;
-
-#elif defined(MCS4)
-    #include "mcs4.h"
-    typedef MCSLock LockType;    
-    
-#elif defined(MCS5)
-    #include "mcs5.h"
-    typedef MCSLock LockType; 
-
-#elif defined(CLH1)
+// CLH Lock variants
+#elif defined(CLH_BASELINE) || defined(CLH_LS_ARRAY) || defined(CLH_LS_HYBRID) || defined(CLH_LS_INVOKE)
     #include "clh1.h"
     typedef CLHLock LockType;
 
-#elif defined(CLH3)
-    #include "clh3.h"
-    typedef CLHLock LockType;    
-
-#elif defined(CLH4)
-    #include "clh4.h"
-    typedef CLHLock LockType;
-
-#elif defined(TICKET1)
+// Ticket Lock variants
+#elif defined(TICKET_BASELINE) || defined(TICKET_LS_ARRAY) || defined(TICKET_LS_HYBRID) || defined(TICKET_LS_INVOKE)
     #include "ticket1.h"
     typedef TicketLock LockType;
 
-#elif defined(TICKET3)
-    #include "ticket3.h"
-    typedef TicketLock LockType;
-
-#elif defined(TICKET4)
-    #include "ticket4.h"
-    typedef TicketLock LockType;    
-
-#elif defined(ABQL1)
-    #include "abql1.h"
-    typedef ABQLLock LockType;
-
-#elif defined(ABQL3)
-    #include "abql3.h"
-    typedef ABQLLock LockType;
-
-#elif defined(ABQL4)
-    #include "abql4.h"
-    typedef ABQLLock LockType;
-
-#elif defined(TAS1)
+// TAS Lock variants
+#elif defined(TAS_BASELINE) || defined(TAS_LS_ARRAY) || defined(TAS_LS_HYBRID) || defined(TAS_LS_INVOKE)
     #include "tas1.h"
     typedef TASLock LockType;
 
-#elif defined(TAS3)
-    #include "tas3.h"
-    typedef TASLock LockType;
-    
-#elif defined(TAS4)
-    #include "tas4.h"
-    typedef TASLock LockType;
+// ABQL Lock variants
+#elif defined(ABQL_BASELINE) || defined(ABQL_LS_ARRAY) || defined(ABQL_LS_HYBRID) || defined(ABQL_LS_INVOKE)
+    #include "abql1.h"
+    typedef ABQLLock LockType;
 
-#elif defined(K421)
+// K42 Lock variants
+#elif defined(K42_BASELINE) || defined(K42_LS_ARRAY) || defined(K42_LS_HYBRID) || defined(K42_LS_INVOKE)
     #include "k421.h"
-    typedef K42Lock LockType;    
+    typedef K42Lock LockType;
 
-#elif defined(K423)
-    #include "k423.h"
-    typedef K42Lock LockType;    
-
-#elif defined(K424)
-    #include "k424.h"
-    typedef K42Lock LockType;    
-
-#elif defined(HEM1)
+// HEM Lock variants
+#elif defined(HEM_BASELINE) || defined(HEM_LS_ARRAY) || defined(HEM_LS_HYBRID) || defined(HEM_LS_INVOKE)
     #include "hem1.h"
-    typedef HemLock LockType;    
+    typedef HemLock LockType;
 
-#elif defined(HEM3)
-    #include "hem3.h"
-    typedef HemLock LockType;    
-
-#elif defined(HEM4)
-    #include "hem4.h"
-    typedef HemLock LockType;         
-   
-#elif defined(CNA1)
+// CNA Lock variants
+#elif defined(CNA_BASELINE) || defined(CNA_LS_ARRAY) || defined(CNA_LS_HYBRID) || defined(CNA_LS_INVOKE)
     #include "cna1.h"
-    typedef CNALock LockType;    
+    typedef CNALock LockType;
 
-#elif defined(CNA3)
-    #include "cna3.h"
-    typedef CNALock LockType; 
-
-#elif defined(CNA4)
-    #include "cna4.h"
-    typedef CNALock LockType;             
 // ---------- Default fallback ----------
 #else
     #pragma message("No lock type defined. Defaulting to TASLock.")

@@ -10,13 +10,16 @@ BIN_DIR := bin
 
 HASH_SRC := $(SRC_DIR)/shielding_hash.cpp
 ARRAY_SRC := $(SRC_DIR)/shielding_array.cpp
+INVOKE_SRC := $(SRC_DIR)/shielding_invoke.cpp
 BENCH_SRC := $(SRC_DIR)/lock_bench.cpp
 
 HASH_OBJ := $(OBJ_DIR)/shielding_hash.o
 ARRAY_OBJ := $(OBJ_DIR)/shielding_array.o
+INVOKE_OBJ := $(OBJ_DIR)/shielding_invoke.o
 
 HASH_SO := $(LIB_DIR)/libshielding_hash.so
 ARRAY_SO := $(LIB_DIR)/libshielding_array.so
+INVOKE_SO := $(LIB_DIR)/libshielding_invoke.so
 
 # Default lock type (override with make LOCK_DEF=TAS3)
 LOCK_DEF ?= MCS1
@@ -25,7 +28,7 @@ BENCH_BIN := $(BIN_DIR)/$(LOCK_LOWER)_lock_bench
 
 .PHONY: all clean
 
-all: inc/topology.h $(HASH_SO) $(ARRAY_SO) $(BENCH_BIN)
+all: inc/topology.h $(HASH_SO) $(ARRAY_SO) $(INVOKE_SO) $(BENCH_BIN)
 
 inc/topology.h: inc/topology.in
 	cat $< | sed -e "s/@nodes@/$$(numactl -H | head -1 | cut -f 2 -d' ')/g" > $@
@@ -45,17 +48,25 @@ $(HASH_OBJ): $(HASH_SRC) | $(OBJ_DIR)
 $(ARRAY_OBJ): $(ARRAY_SRC) | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+$(INVOKE_OBJ): $(INVOKE_SRC) | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 $(HASH_SO): $(HASH_OBJ) | $(LIB_DIR)
 	$(CXX) -shared -o $@ $<
 
 $(ARRAY_SO): $(ARRAY_OBJ) | $(LIB_DIR)
 	$(CXX) -shared -o $@ $<
 
+$(INVOKE_SO): $(INVOKE_OBJ) | $(LIB_DIR)
+	$(CXX) -shared -o $@ $<
+
 # Detect required library based on LOCK_DEF
-ifeq ($(findstring 3,$(LOCK_DEF)),3)
+ifeq ($(findstring LS_ARRAY,$(LOCK_DEF)),LS_ARRAY)
     EXTRA_LIB := -lshielding_array
-else ifeq ($(findstring 4,$(LOCK_DEF)),4)
+else ifeq ($(findstring LS_HYBRID,$(LOCK_DEF)),LS_HYBRID)
     EXTRA_LIB := -lshielding_hash
+else ifeq ($(findstring LS_INVOKE,$(LOCK_DEF)),LS_INVOKE)
+    EXTRA_LIB := -lshielding_invoke    
 else
     EXTRA_LIB :=
 endif

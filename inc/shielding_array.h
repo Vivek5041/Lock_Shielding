@@ -41,20 +41,20 @@ struct LS_LockHashEntry {
 };
 
 LS_LockEntry* lookup(void* l);
-void IncrementRef(void* l);
-int DecrementRef(void* l);
+void IncrementRef(void* l, LS_LockEntry* entry = nullptr);
+int DecrementRef(void* l, LS_LockEntry* entry = nullptr);
 
-template <typename LockFunc, typename... Args>
-LS_Status  LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&... args) {
+template <typename LockType, typename LockFunc, typename... Args>
+LS_Status  LS_ACQUIRE(LockType* l, bool reentrant, LockFunc lock_fn, Args&&... args) {
     DEBUG_PRINT("In LS_ACQUIRE\n");
     LS_LockEntry* entry = lookup(l);
     if (!entry) {
         lock_fn(l, std::forward<Args>(args)...);
-        IncrementRef(l);
+        IncrementRef(l, entry);
         return LS_Status::LS_ACQUIRE_NOW;
     }
     if (reentrant) {
-        IncrementRef(l);
+        IncrementRef(l, entry);
         return LS_Status::LS_SKIP_ACQUISITION;
     }
     fprintf(stderr, "PANIC: LS_ACQUIRE failed due to UNBALANCED_LOCK!\n");
@@ -62,8 +62,8 @@ LS_Status  LS_ACQUIRE(void* l, bool reentrant, LockFunc lock_fn, Args&&... args)
     return LS_Status::LS_UNBALANCED_LOCK;
 }
 
-template <typename UnlockFunc, typename... Args>
-LS_Status LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&&... args) {
+template <typename LockType, typename UnlockFunc, typename... Args>
+LS_Status LS_RELEASE(LockType* l, bool reentrant, UnlockFunc unlock_fn, Args&&... args) {
     DEBUG_PRINT("In LS_RELEASE\n");
     LS_LockEntry* entry = lookup(l);
     if (!entry) {
@@ -72,7 +72,7 @@ LS_Status LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&&... ar
         return LS_Status::LS_UNBALANCED_UNLOCK;
     }
     if (reentrant) {
-        int val = DecrementRef(l);
+        int val = DecrementRef(l, entry);
         if (val == 0) {
             unlock_fn(l, std::forward<Args>(args)...);
             return LS_Status::LS_RELEASE_NOW;
@@ -80,7 +80,7 @@ LS_Status LS_RELEASE(void* l, bool reentrant, UnlockFunc unlock_fn, Args&&... ar
         return LS_Status::LS_SKIP_RELEASE;
     }
     unlock_fn(l, std::forward<Args>(args)...);
-    DecrementRef(l);
+    DecrementRef(l, entry);
     return LS_Status::LS_RELEASE_NOW;
 }
 

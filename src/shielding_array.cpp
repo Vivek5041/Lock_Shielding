@@ -18,7 +18,9 @@ LS_LockEntry* lookup(void* l) {
 }
 
 void IncrementRef(void* l, LS_LockEntry* entry) {
-    // LS_LockEntry* entry = lookup(l);
+    if (!entry) {
+        entry = lookup(l);
+    }
     if (!entry) {
         if (lock_count < MAX_LOCKS) {
             lock_table[lock_count].lock_ptr = l;
@@ -31,7 +33,9 @@ void IncrementRef(void* l, LS_LockEntry* entry) {
 }
 
 int DecrementRef(void* l, LS_LockEntry* entry) {
-    // LS_LockEntry* entry = lookup(l);
+    if (!entry) {
+        entry = lookup(l);
+    }
     if (!entry) return -1;
 
     if (entry->rec_count > 1) {

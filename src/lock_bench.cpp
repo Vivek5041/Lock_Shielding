@@ -3,12 +3,29 @@
 #include <thread>
 #include <chrono>
 #include <pthread.h>
+
+// Sanity check and shielding setup
+#include "sanity_check.h"
 #include "lock_type.h"  // Choose lock via -DLOCK_DEF macro
+
+// Wrapper functions for compatibility with array/hash shielding versions
+void lock_acquire(LockType* l) {
+    l->Acquire();
+}
+
+void lock_release(LockType* l) {
+    l->Release();
+}
 
 #define CPU_RANGE1_START 64
 #define CPU_RANGE1_END 127
 #define NUM_ITERATION 100000000
 #define WARMUP_ITERATIONS 10000
+
+// Define SHIELD macro for shielded versions
+#if defined(SHIELD_VERSION_LS_ARRAY) || defined(SHIELD_VERSION_LS_HYBRID) || defined(SHIELD_VERSION_LS_INVOKE)
+    #define SHIELD
+#endif
 
 LockType lock;
 pthread_barrier_t my_barrier;
@@ -37,8 +54,18 @@ void pin_thread_to_cpu(int thread_id) {
 
 void warmup_thread(int id) {
     for (long int i = 0; i < WARMUP_ITERATIONS; i++) {
+#ifdef SHIELD
+#if defined(SHIELD_VERSION_LS_INVOKE)
+        LS_ACQUIRE<LockType, void(LockType::*)()>(&lock, false, &LockType::Acquire);
+        LS_RELEASE<LockType, void(LockType::*)()>(&lock, false, &LockType::Release);
+#else
+        LS_ACQUIRE(&lock, false, lock_acquire);
+        LS_RELEASE(&lock, false, lock_release);
+#endif
+#else
         lock.Acquire();
         lock.Release();
+#endif
     }
 }
 
@@ -54,9 +81,21 @@ void test_thread(int id) {
     auto start = std::chrono::high_resolution_clock::now();
     
     for (long int i = start_iter; i < end_iter; i++) {
+#ifdef SHIELD
+#if defined(SHIELD_VERSION_LS_INVOKE)
+        LS_ACQUIRE<LockType, void(LockType::*)()>(&lock, false, &LockType::Acquire);
+        // do_work(1000);
+        LS_RELEASE<LockType, void(LockType::*)()>(&lock, false, &LockType::Release);
+#else
+        LS_ACQUIRE(&lock, false, lock_acquire);
+        // do_work(1000);
+        LS_RELEASE(&lock, false, lock_release);
+#endif
+#else
         lock.Acquire();
-        do_work(1000);
+        // do_work(1000);
         lock.Release();
+#endif
     }
     
     pthread_barrier_wait(&my_barrier);

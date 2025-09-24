@@ -1,5 +1,6 @@
 #ifndef TICKET1_H
 #define TICKET1_H
+
 #include <atomic>
 
 class TicketLock {

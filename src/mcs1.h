@@ -13,9 +13,11 @@ thread_local Node myNode;
 class MCSLock {
 private:
     std::atomic<Node*> tail{nullptr};
+
 public:
     void Acquire() {
         myNode.next.store(nullptr);
+        myNode.locked.store(true, std::memory_order_relaxed);
         Node* prev = tail.exchange(&myNode);
         if (prev != nullptr) {
             prev->next.store(&myNode);
