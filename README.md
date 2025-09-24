@@ -21,7 +21,7 @@
 | **CLH** | Array-based spinning | Cache-efficient workloads |
 | **TAS** | Test-and-Set | Low overhead, simple cases |
 | **Ticket** | FIFO fairness | Fair scheduling required |
-| **ABQL** | Abortable queue locks | Timeout scenarios |
+| **ABQL** | Array-based queue locks | FIFO locking scenarios |
 | **K42** | Hierarchical locking | Complex lock hierarchies |
 | **HEM** | Hierarchical exponential backoff | Variable contention |
 | **CNA** | Cohort-aware NUMA | NUMA-optimized systems |
