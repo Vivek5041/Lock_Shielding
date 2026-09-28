@@ -1,4 +1,4 @@
-# Shield - High-Performance Lock Shielding System
+# Lock Shielding - High-Performance Shielding System
 
 **Shield** is a sophisticated C++17 library implementing **Lock Shielding (LS)** techniques to make locks resilient to common misuse patterns in concurrent programming. It provides reference counting-based protection against **UNBALANCED-LOCK** and **UNBALANCED-UNLOCK** errors while supporting lock reentrancy.
 
